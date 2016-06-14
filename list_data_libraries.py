@@ -14,6 +14,7 @@
    -k KEY, --key KEY  the Galaxy API key to use (overrides default)
    -v, --verbose      Print out debugging information
 
+ Needs an API key in GALAXY_KEY unless specified via command line
  Assumes Galaxy instance exists at localhost and refseq folder has the following structure:
     refseq_folder/
         species/
