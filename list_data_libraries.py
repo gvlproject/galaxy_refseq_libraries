@@ -1,5 +1,5 @@
 '''
-Script to make data library for genus from RefSeq fna files
+ Script to make data library of RefSeq reference genomes for specified genus
  usage: list_data_libraries.py [-h] [-d DIR] [-k KEY] [-v] genus
 
  Add RefSeq reference genomes to galaxy data libraries.
@@ -42,7 +42,7 @@ def getFilesInFolder(contents, folder):
     return file_names
 
 GALAXY_URL = 'http://127.0.0.1/galaxy/'
-GALAXY_KEY = '76822b3132377362e5607732b2574766'
+GALAXY_KEY = ''
 REFSEQ_DIR = '/mnt/galaxyIndices/Bacteria/'
 
 # Get things like API Key, RefSeq directory and genus from command line
