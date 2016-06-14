@@ -12,15 +12,17 @@ genus   the genus to create a library for
 optional arguments:
 ```
 -h, --help         show this help message and exit
+-u URL, --url URL  the galaxy URL
 -d DIR, --dir DIR  the RefSeq directory containing all species
 -k KEY, --key KEY  the Galaxy API key to use
 -v, --verbose      Print out debugging information
 ```
 Needs an API key in GALAXY_KEY unless specified via command line
 
-Assumes Galaxy instance exists at localhost and refseq folder has the following structure:
+Assumes refseq folder has the following structure:
 ```
 refseq_folder/
     species/
         fna files
 ```
+
