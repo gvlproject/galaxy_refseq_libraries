@@ -42,14 +42,14 @@ def getFilesInFolder(contents, folder):
             file_names.append(filepath[2])
     return file_names
 
-GALAXY_URL = 'http://127.0.0.1/galaxy/'
-GALAXY_KEY = ''
+GALAXY_URL = 'http://127.0.0.1:8080/galaxy/'
 REFSEQ_DIR = '/mnt/galaxyIndices/Bacteria/'
 
 # Get things like API Key, RefSeq directory and genus from command line
 parser = argparse.ArgumentParser(description='Add RefSeq reference genomes to galaxy data libraries.')
 
 parser.add_argument("genus", type=str, help="the genus to create a library for")
+parser.add_argument('-u', '--url', type=str, help='the galaxy URL')
 parser.add_argument('-d', '--dir', type=str, help='the RefSeq directory containing all species (overrides default)')
 parser.add_argument('-k', '--key', type=str, help='the Galaxy API key to use (overrides default)')
 parser.add_argument('-v', '--verbose', action="store_true", help='Print out debugging information')
@@ -58,13 +58,16 @@ parser.add_argument('-v', '--verbose', action="store_true", help='Print out debu
 args = parser.parse_args()
 genus = args.genus.lower()
 
-# Override defaults for API key and RefSeq dir if we need to
+# Override defaults for URL, API key and RefSeq dir if we need to
+if args.url:
+    GALAXY_URL = args.url
+
 if args.dir:
     REFSEQ_DIR = args.dir
 
-# Ensure the RefSeq directory ends in a / to avoid errors later
-if REFSEQ_DIR[-1] != "/":
-    REFSEQ_DIR += "/"
+# Ensure the RefSeq directory and Galaxy URL end in a / to avoid errors later
+if REFSEQ_DIR[-1] != "/": REFSEQ_DIR += "/"
+if GALAXY_URL[-1] != "/": GALAXY_URL += "/"
 
 if args.key:
     GALAXY_KEY = args.key
@@ -78,7 +81,7 @@ if args.verbose:
 
 # Check the RefSeq directory exists, exit if we can't find it
 if not os.path.isdir(REFSEQ_DIR):
-    printerr("ERROR: The RefSeq directory could not be found")
+    printerr("ERROR: The RefSeq directory could not be found at " + REFSEQ_DIR)
     sys.exit(1)
 
 # Initiating Galaxy connection
@@ -147,12 +150,18 @@ for folder in dirs[genus]:
         if fna not in getFilesInFolder(gi.libraries.show_library(lib['id'], contents=True), folder):
             if args.verbose: print("Adding file - " + fna)
 
-            # This makes a symbolic link instead of a copy
-            gi.libraries.upload_from_galaxy_filesystem(
-                library_id=lib['id'],
-                filesystem_paths=REFSEQ_DIR + folder + "/" + fna,
-                folder_id=fldr['id'],
-                link_data_only="link_to_files")
-
+            if "127.0.0.1" in GALAXY_URL or "localhost" in GALAXY_URL:
+                # Local Galaxy server - create a symbolic link instead of a copy
+                gi.libraries.upload_from_galaxy_filesystem(
+                    library_id=lib['id'],
+                    filesystem_paths=REFSEQ_DIR + folder + "/" + fna,
+                    folder_id=fldr['id'],
+                    link_data_only="link_to_files")
+            else:
+                # Remote Galaxy server - copy files from local machine
+                gi.libraries.upload_file_from_local_path(
+                    library_id=lib['id'],
+                    file_local_path=REFSEQ_DIR + folder + "/" + fna,
+                    folder_id=fldr['id'])
         else:
             if args.verbose: print("File exists - " + fna)
