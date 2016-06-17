@@ -65,7 +65,7 @@ def getFilesInFolder(contents, folder):
 
 # Default values
 GALAXY_URL = 'http://127.0.0.1:8080/galaxy/'
-GALAXY_KEY = '76822b3132377362e5607732b2574766'
+GALAXY_KEY = ''
 REFSEQ_DIR = '/mnt/galaxyIndices/Bacteria/'
 
 # Get things like API Key, RefSeq directory and genus from command line
