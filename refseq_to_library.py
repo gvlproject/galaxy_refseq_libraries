@@ -1,18 +1,19 @@
 '''
- Script to make data library of RefSeq reference genomes for specified genus
- usage: list_data_libraries.py [-h] [-d DIR] [-k KEY] [-v] genus
+ Script to make data library of RefSeq reference genomes for specified genus (or species)
+ usage: refseq_to_library.py [-h] [-s SPECIES] [-u URL] [-d DIR] [-k KEY] [-v] genus
 
  Add RefSeq reference genomes to galaxy data libraries.
 
  positional arguments:
-   genus              the genus to create a library for
+  genus                 the genus to create a library for
 
  optional arguments:
-   -h, --help         show this help message and exit
-   -d DIR, --dir DIR  the RefSeq directory containing all species (overrides
-                      default)
-   -k KEY, --key KEY  the Galaxy API key to use (overrides default)
-   -v, --verbose      Print out debugging information
+   -h, --help            show this help message and exit
+   -s SPECIES, --species SPECIES     the species to create the library for
+   -u URL, --url URL     the galaxy URL
+   -d DIR, --dir DIR     the RefSeq directory containing all species
+   -k KEY, --key KEY     the Galaxy API key to use
+   -v, --verbose         Print out debugging information
 
  Needs an API key in GALAXY_KEY unless specified via command line
  Assumes Galaxy instance exists at localhost and refseq folder has the following structure:
@@ -31,18 +32,40 @@ import sys
 import argparse
 
 
-def printerr(*args, **kwargs):
-    print(*args, file=sys.stderr, **kwargs)
+def printerr(*args):
+    '''
+     Function for printing to stderr
+
+    :param args: The contents to be printed to stderr
+    :return: None
+    '''
+
+    print(*args, file=sys.stderr)
+
 
 def getFilesInFolder(contents, folder):
+    '''
+     Function for getting a list of all files in a library's folder.
+
+    :param contents: The contents of the library - can be obtained with show_library(lib['id'], contents=True)
+    :param folder: The name of the folder (as a string)
+    :return: A list of file names (strings) within folder
+    '''
+
     file_names = []
     for item in contents:
+        # Split file path
         filepath = item['name'].split('/')
+
+        # Check if file and inside folder, if so, add to list
         if item['type'] == 'file' and filepath[1] == folder:
             file_names.append(filepath[2])
+
     return file_names
 
+# Default values
 GALAXY_URL = 'http://127.0.0.1:8080/galaxy/'
+GALAXY_KEY = '76822b3132377362e5607732b2574766'
 REFSEQ_DIR = '/mnt/galaxyIndices/Bacteria/'
 
 # Get things like API Key, RefSeq directory and genus from command line
@@ -94,7 +117,7 @@ if not os.path.isdir(REFSEQ_DIR):
 gi = GalaxyInstance(url=GALAXY_URL, key=GALAXY_KEY)
 
 
-# Make a dict of all RefSeq directories, map genus to relevant dirs
+# Make a dict of all genus/species/RefSeq directories, map genus to a dict of species:folder pairs
 dirs = defaultdict(lambda : defaultdict(list))
 
 for folder in os.listdir(REFSEQ_DIR):
@@ -109,7 +132,7 @@ for folder in os.listdir(REFSEQ_DIR):
         if folder_tmp.find("_") == 0:
             folder_tmp = folder_tmp[1:]
 
-        # Grab genus from folder name, add genus:folder pair to dict
+        # Grab genus from folder name, add species:folder pair to genus dict
         split_point = folder_tmp.split("_")
         if len(split_point) > 2:
             dirs[split_point[0].lower()][split_point[1].lower()].append(folder)
@@ -132,29 +155,32 @@ libraries = gi.libraries.get_libraries(deleted=False)
 possible_lib_name = genus + " " + species
 possible_lib_name = possible_lib_name.strip()
 
-# Create library if it doesn't exist
+# Get existing library info if it does exist, if it doesn't exist create library
 if possible_lib_name in [lib['name'] for lib in libraries if not lib['deleted']]:
     if args.verbose: print("Library already exists - checking it is up to date")
 
-    # Get library - assumes theres only one library of that name
+    # Get library - assumes there is only one library of that name
     lib = gi.libraries.get_libraries(name=possible_lib_name, deleted=False)[0]
 else:
     if args.verbose: print("Library doesn't exist - adding new library")
     lib = gi.libraries.create_library(possible_lib_name, "Reference genomes for " + possible_lib_name)
 
+# Species needs to be an iterable - ensure it is
 if species:
+    # If species exists, put it in a list
     species = [species]
 else:
+    # If it was unspecified, make it a list of all the possible species
     species = list(dirs[genus].keys())
 
-print(species)
 # Get all the directory names for checking later on
 lib_dirs = [d['name'][1:] for d in gi.libraries.get_folders(lib['id'])]
 
-
+# For each species specified, go through each folder and add appropriate files
 for spc in species:
     for folder in dirs[genus][spc]:
-        # Check if folder exists, get required info if it does else create it
+
+        # Check if folder exists, get required info if it does, otherwise create it
         if folder in lib_dirs:
             if args.verbose: print("Directory exists: " + folder)
 
