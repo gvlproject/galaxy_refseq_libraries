@@ -1,7 +1,8 @@
 # galaxy_refseq_libraries
 Script to make data library of RefSeq reference genomes for specified genus
 
-``` usage: refseq_to_library.py [-h] [-s SPECIES] [-u URL] [-d DIR] [-k KEY] [-v] genus
+```
+usage: refseq_to_library.py [-h] [-s SPECIES] [-u URL] [-d DIR] [-k KEY] [-v] genus
 
  Add RefSeq reference genomes to galaxy data libraries.
 
@@ -31,6 +32,3 @@ refseq_folder/
 
 ### Adding to a remote Galaxy server
 Ensure you specify the Galaxy URL using the `-u URL` or `--url URL` options.
-
-
-
