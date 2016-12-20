@@ -1,19 +1,28 @@
 '''
  Script to make data library of RefSeq reference genomes for specified genus (or species)
- usage: refseq_to_library.py [-h] [-s SPECIES] [-u URL] [-d DIR] [-k KEY] [-v] genus
+usage: refseq_to_library.py [-h] [-s SPECIES] [-u URL] [-d DIR] [-k KEY] [-v]
+                            [-t [FILETYPES [FILETYPES ...]]] [-e]
+                            genus
 
- Add RefSeq reference genomes to galaxy data libraries.
+Add RefSeq reference genomes to galaxy data libraries.
 
- positional arguments:
+positional arguments:
   genus                 the genus to create a library for
 
- optional arguments:
-   -h, --help            show this help message and exit
-   -s SPECIES, --species SPECIES     the species to create the library for
-   -u URL, --url URL     the galaxy URL
-   -d DIR, --dir DIR     the RefSeq directory containing all species
-   -k KEY, --key KEY     the Galaxy API key to use
-   -v, --verbose         Print out debugging information
+optional arguments:
+  -h, --help            show this help message and exit
+  -s SPECIES, --species SPECIES
+                        the species to create the library for
+  -u URL, --url URL     the galaxy URL
+  -d DIR, --dir DIR     the RefSeq directory containing all species (overrides
+                        default)
+  -k KEY, --key KEY     the Galaxy API key to use (overrides default)
+  -v, --verbose         Print out debugging information
+  -t [FILETYPES [FILETYPES ...]], --filetypes [FILETYPES [FILETYPES ...]]
+                        A space-seperated list of filetypes to include in the
+                        data library. Defaults to fna, faa, ffn, gbk, gff
+  -e, --exclude         Exclude the file types specified in -t. Defaults to
+                        excluding fna, faa, ffn, gbk, gff
 
  Needs an API key in GALAXY_KEY unless specified via command line
  Assumes Galaxy instance exists at localhost and refseq folder has the following structure:
@@ -102,7 +111,7 @@ if __name__ == "__main__":
     parser.add_argument('-d', '--dir', type=str, help='the RefSeq directory containing all species (overrides default)')
     parser.add_argument('-k', '--key', type=str, help='the Galaxy API key to use (overrides default)')
     parser.add_argument('-v', '--verbose', action="store_true", help='Print out debugging information')
-    parser.add_argument('-t', '--filetypes', nargs='*', help='A list of filetypes to include in the data library. Defaults to fna, faa, ffn, gbk, gff')
+    parser.add_argument('-t', '--filetypes', nargs='*', help='A space-seperated list of filetypes to include in the data library. Defaults to fna, faa, ffn, gbk, gff')
     parser.add_argument('-e', '--exclude', action='store_true', help='Exclude the file types specified in -t. Defaults to excluding fna, faa, ffn, gbk, gff')
 
     # Parse args, store genus in lowercase
@@ -122,7 +131,7 @@ if __name__ == "__main__":
         REFSEQ_DIR = args.dir
 
     if args.filetypes:
-        fileTypes = args.filetypes        
+        fileTypes = args.filetypes
 
     # Ensure the RefSeq directory and Galaxy URL end in a / to avoid errors later
     if REFSEQ_DIR[-1] != "/": REFSEQ_DIR += "/"
