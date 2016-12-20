@@ -63,26 +63,26 @@ def getFilesInLibraryFolder(contents, folder):
 
     return file_names
 
-def getFilesToInclude(filePath, fileTypes, include=True):
+def getFilesToInclude(filePath, fileTypes, exclude=False):
     '''
      Function for getting a list of all files of a given type (or the inverse).
-     Assumes the file extensions are not multi-part, i.e. .tar.gz
 
     :param filePath: The path of the folder containing the files.
     :param fileTypes: A list of file types you wish to include/exclude.
-    :param include: True if you want to get files matching those in fileTypes, False if you want to exclude files matching those in fileTypes.
+    :param include: True if you want to get files matching those in fileTypes,
+            False if you want to exclude files matching those in fileTypes.
     :return: A list of file names (strings) within folder
     '''
 
     # By default, we check if the filetype is in the filetypes.
-    compareFunc=lambda ftype,ftypes: ftype in ftypes
-    if not include: # Overriding default behaviour
-        compareFunc=lambda ftype,ftypes: ftype not in ftypes
+    compareFunc=lambda ftype,ftypes: ftype.endswith(tuple(ftypes))
+    if exclude: # Overriding default behaviour
+        compareFunc=lambda ftype,ftypes: not ftype.endswith(tuple(ftypes))
 
     files_to_include = []
     for fileName in os.listdir(filePath):
         # Compare the file extension with the fileTypes list.
-        if compareFunc(fileName.split(".")[-1], fileTypes):
+        if compareFunc(fileName, fileTypes):
             files_to_include.append(fileName)
 
     return files_to_include
@@ -102,11 +102,14 @@ if __name__ == "__main__":
     parser.add_argument('-d', '--dir', type=str, help='the RefSeq directory containing all species (overrides default)')
     parser.add_argument('-k', '--key', type=str, help='the Galaxy API key to use (overrides default)')
     parser.add_argument('-v', '--verbose', action="store_true", help='Print out debugging information')
+    parser.add_argument('-t', '--filetypes', nargs='*', help='A list of filetypes to include in the data library. Defaults to fna, faa, ffn, gbk, gff')
+    parser.add_argument('-e', '--exclude', action='store_true', help='Exclude the file types specified in -t. Defaults to excluding fna, faa, ffn, gbk, gff')
 
     # Parse args, store genus in lowercase
     args = parser.parse_args()
     genus = args.genus.lower()
     species = ''
+    fileTypes=['fna', 'faa', 'ffn', 'gbk', 'gff']
 
     # Override defaults for Species, URL, API key and RefSeq dir if we need to
     if args.species:
@@ -117,6 +120,9 @@ if __name__ == "__main__":
 
     if args.dir:
         REFSEQ_DIR = args.dir
+
+    if args.filetypes:
+        fileTypes = args.filetypes        
 
     # Ensure the RefSeq directory and Galaxy URL end in a / to avoid errors later
     if REFSEQ_DIR[-1] != "/": REFSEQ_DIR += "/"
@@ -216,7 +222,7 @@ if __name__ == "__main__":
                 if args.verbose: print("Adding directory to library - " + folder)
                 fldr = gi.libraries.create_folder(lib['id'], folder)[0]
 
-            for fna in os.listdir(REFSEQ_DIR + folder):
+            for fna in getFilesToInclude(REFSEQ_DIR + folder, fileTypes, args.exclude):
 
                 # If file doesn't exist, add it
                 if fna not in getFilesInLibraryFolder(gi.libraries.show_library(lib['id'], contents=True), folder):
