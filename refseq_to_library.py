@@ -101,44 +101,36 @@ if __name__ == "__main__":
     GALAXY_URL = 'http://127.0.0.1:8080/galaxy/'
     GALAXY_KEY = ''
     REFSEQ_DIR = '/mnt/galaxyIndices/Bacteria/'
+    FILE_TYPES=['fna', 'faa', 'ffn', 'gbk', 'gff']
 
     # Get things like API Key, RefSeq directory and genus from command line
     parser = argparse.ArgumentParser(description='Add RefSeq reference genomes to galaxy data libraries.')
 
     parser.add_argument("genus", type=str, help="the genus to create a library for")
-    parser.add_argument('-s', '--species', type=str, help='the species to create the library for')
-    parser.add_argument('-u', '--url', type=str, help='the galaxy URL')
-    parser.add_argument('-d', '--dir', type=str, help='the RefSeq directory containing all species (overrides default)')
-    parser.add_argument('-k', '--key', type=str, help='the Galaxy API key to use (overrides default)')
+    parser.add_argument('-s', '--species', type=str, help='the species to create the library for', default="")
+    parser.add_argument('-u', '--url', type=str, help='the galaxy URL', default=GALAXY_URL)
+    parser.add_argument('-d', '--dir', type=str, help='the RefSeq directory containing all species (overrides default)', default=REFSEQ_DIR)
+    parser.add_argument('-k', '--key', type=str, help='the Galaxy API key to use (overrides default)', default=GALAXY_KEY)
     parser.add_argument('-v', '--verbose', action="store_true", help='Print out debugging information')
-    parser.add_argument('-t', '--filetypes', nargs='*', help='A space-seperated list of filetypes to include in the data library. Defaults to fna, faa, ffn, gbk, gff')
+    parser.add_argument('-t', '--filetypes', nargs='*', help='A space-seperated list of filetypes to include in the data library. Defaults to fna, faa, ffn, gbk, gff', default=FILE_TYPES)
     parser.add_argument('-e', '--exclude', action='store_true', help='Exclude the file types specified in -t. Defaults to excluding fna, faa, ffn, gbk, gff')
 
     # Parse args, store genus in lowercase
     args = parser.parse_args()
     genus = args.genus.lower()
-    species = ''
-    fileTypes=['fna', 'faa', 'ffn', 'gbk', 'gff']
 
-    # Override defaults for Species, URL, API key and RefSeq dir if we need to
-    if args.species:
-        species = args.species.lower()
+    # Renaming for readability.
+    species = args.species.lower()
+    GALAXY_URL = args.url
+    REFSEQ_DIR = args.dir
+    GALAXY_KEY = args.key
+    FILE_TYPES = args.filetypes
 
-    if args.url:
-        GALAXY_URL = args.url
-
-    if args.dir:
-        REFSEQ_DIR = args.dir
-
-    if args.filetypes:
-        fileTypes = args.filetypes
 
     # Ensure the RefSeq directory and Galaxy URL end in a / to avoid errors later
     if REFSEQ_DIR[-1] != "/": REFSEQ_DIR += "/"
     if GALAXY_URL[-1] != "/": GALAXY_URL += "/"
 
-    if args.key:
-        GALAXY_KEY = args.key
 
     # Print out debugging info
     if args.verbose:
@@ -231,7 +223,7 @@ if __name__ == "__main__":
                 if args.verbose: print("Adding directory to library - " + folder)
                 fldr = gi.libraries.create_folder(lib['id'], folder)[0]
 
-            for fna in getFilesToInclude(REFSEQ_DIR + folder, fileTypes, args.exclude):
+            for fna in getFilesToInclude(REFSEQ_DIR + folder, FILE_TYPES, args.exclude):
 
                 # If file doesn't exist, add it
                 if fna not in getFilesInLibraryFolder(gi.libraries.show_library(lib['id'], contents=True), folder):
