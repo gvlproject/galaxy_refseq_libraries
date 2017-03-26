@@ -104,7 +104,7 @@ def getLibraryPermissions(gi, lib):
 def main():
     # Default values.
     galaxy_url = 'http://127.0.0.1:8080/galaxy/'
-    galaxy_key = '41af1965d4573a6e253b3fbc692b8d90'
+    galaxy_key = ''
 
     # Get things like API Key, galaxy URL, etc from command line.
     parser = argparse.ArgumentParser(description='Edit permissions for an existing data library. This script will append users by default.')
