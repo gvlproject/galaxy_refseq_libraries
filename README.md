@@ -34,7 +34,6 @@ optional arguments:
 
 - Needs an API key in galaxy_key variable, unless specified via command line.
 - Assumes Galaxy instance exists at localhost unless otherwise specified (see section below).
--
 
 ### Example use
 
@@ -71,3 +70,9 @@ Ensure you specify the Galaxy URL using the `-u URL` or `--url URL` options.
 
 ### Updating an existing Galaxy data library
 Ensure you specify the data library name you wish to update using the `-n NAME` or `--name NAME` options.
+
+### User permissions
+- For new libraries, if `-a` is unspecified, the library will be public.
+- For existing libraries, if `-a` is unspecified, no permissions will change.
+- For existing libraries, if `-a` is specified, the specified users will be appended to the list of existing users with permission. i.e., existing permissions are not-overwritten.
+- If you need a more powerful permission manager, see `library_permissions.py`
