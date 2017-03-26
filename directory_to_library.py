@@ -224,7 +224,7 @@ def main():
     parser.add_argument('-v', '--verbose', action="store_true", help='Print out debugging information')
     parser.add_argument('-t', '--filetypes', nargs='*', help='A space-seperated list of filetypes to include in the data library. Defaults to fna, faa, ffn, gbk, gff', default=file_types)
     parser.add_argument('-e', '--exclude', action='store_true', help='Exclude the file types specified in -t. Defaults to excluding fna, faa, ffn, gbk, gff')
-    parser.add_argument('-a', '--allow_users', nargs='*', help='A space-seperated list of emails of users to allow access to the data library. Defaults to None- a public library.', default=[])
+    parser.add_argument('-a', '--allow_users', nargs='*', help='A space-seperated list of emails of users to allow access to the data library. For existing libraries, these users will be appended to the existing permissions list.', default=[])
 
     # Parse args.
     args = parser.parse_args()
@@ -297,7 +297,7 @@ def main():
                 print("WARNING: User " + user + " not found.")
 
         gi.libraries.set_library_permissions(lib['id'],
-                                         access_in=user_ids,
+                                         access_in=current_permissions["access_library_role_list"] + user_ids,
                                          modify_in=current_permissions["modify_library_role_list"],
                                          add_in=current_permissions["add_library_item_role_list"],
                                          manage_in=current_permissions["manage_library_role_list"])
