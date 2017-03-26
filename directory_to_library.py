@@ -176,7 +176,7 @@ def filepathToString(filepath):
 def main():
     # Default values.
     galaxy_url = 'http://127.0.0.1:8080/galaxy/'
-    galaxy_key = '41af1965d4573a6e253b3fbc692b8d90'
+    galaxy_key = ''
     file_types=['fna', 'faa', 'ffn', 'gbk', 'gff']
 
     # Get things like API Key, RefSeq directory and genus from command line.
