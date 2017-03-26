@@ -4,8 +4,9 @@ Script to make data library of local file/directory structure.
 
 ```
 usage: directory_to_library.py [-h] [-u URL] [-k KEY] [-n NAME] [-v]
-                            [-t [FILETYPES [FILETYPES ...]]] [-e]
-                            directory
+                               [-t [FILETYPES [FILETYPES ...]]] [-e]
+                               [-a [ALLOW_USERS [ALLOW_USERS ...]]]
+                               directory
 
 Make a galaxy data library from a file/directory structure.
 
@@ -25,6 +26,10 @@ optional arguments:
                         data library. Defaults to fna, faa, ffn, gbk, gff
   -e, --exclude         Exclude the file types specified in -t. Defaults to
                         excluding fna, faa, ffn, gbk, gff
+  -a [ALLOW_USERS [ALLOW_USERS ...]], --allow_users [ALLOW_USERS [ALLOW_USERS ...]]
+                        A space-seperated list of emails of users to allow
+                        access to the data library. Defaults to None- a public
+                        library.
 ```
 
 - Needs an API key in galaxy_key variable, unless specified via command line.
@@ -54,6 +59,12 @@ python directory_to_library.py test/test_directory -u http://116.156.70.12/galax
 ```
 Will make a data library called 'MyLibrary' on the Galaxy instance at http://116.156.70.12/galaxy
 including all files except those with .fna or .faa extensions.
+
+```
+python directory_to_library.py test/test_directory -u http://116.156.70.12/galaxy -k 123ABC456 -n MyLibrary -a madi@madi.com madi2@madi.com
+```
+Will make a data library called 'MyLibrary' on the Galaxy instance at http://116.156.70.12/galaxy
+and give read permissions only to madi@madi.com and madi2@madi.com. All other non-admin users will be unable to access the data library.
 
 ### Adding to a remote Galaxy server
 Ensure you specify the Galaxy URL using the `-u URL` or `--url URL` options.

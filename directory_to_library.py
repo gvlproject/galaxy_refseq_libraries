@@ -1,8 +1,9 @@
 '''
  Script to make data library of local file/directory structure.
 usage: directory_to_library.py [-h] [-u URL] [-k KEY] [-n NAME] [-v]
-                            [-t [FILETYPES [FILETYPES ...]]] [-e]
-                            directory
+                               [-t [FILETYPES [FILETYPES ...]]] [-e]
+                               [-a [ALLOW_USERS [ALLOW_USERS ...]]]
+                               directory
 
 Make a galaxy data library from a file/directory structure.
 
@@ -22,6 +23,10 @@ optional arguments:
                         data library. Defaults to fna, faa, ffn, gbk, gff
   -e, --exclude         Exclude the file types specified in -t. Defaults to
                         excluding fna, faa, ffn, gbk, gff
+  -a [ALLOW_USERS [ALLOW_USERS ...]], --allow_users [ALLOW_USERS [ALLOW_USERS ...]]
+                        A space-seperated list of emails of users to allow
+                        access to the data library. Defaults to None- a public
+                        library.
 
  Needs an API key in GALAXY_KEY unless specified via command line
  Assumes Galaxy instance exists at localhost unless otherwise specified.
@@ -173,6 +178,36 @@ def filepathToString(filepath):
 
     return "/"+"/".join(filepath)
 
+def getUserIDFromEmail(email, all_users):
+    """
+    Function to get the Galaxy user ID given a user's email.
+
+    :param email: The email of the user to get the ID for
+    :param all_users: All galaxy users, obtained from gi.roles.get_roles()
+    :return: The user ID if user exists, or None
+    """
+    match = next((user for user in all_users if user['name'].lower() == email.strip().lower()), None)
+    if match:
+        return match['id']
+    return None
+
+def getLibraryPermissions(gi, lib):
+    """
+    Function to get the existing galaxy data library permissions, and only return user ID's (no emails).
+
+    :param gi: The galaxy instance object
+    :param lib: The galaxy library object
+    :return: A dictionary containing key:val pairs of data library permission: list of user IDs
+    """
+    permissions = gi.libraries.get_library_permissions(lib['id'])
+    for key, val in permissions.items():
+        user_ids = []
+        for item in val:
+            # Email at index 0, ID at index 1.
+            user_ids.append(item[1])
+        permissions[key] = user_ids
+    return permissions
+
 def main():
     # Default values.
     galaxy_url = 'http://127.0.0.1:8080/galaxy/'
@@ -189,6 +224,7 @@ def main():
     parser.add_argument('-v', '--verbose', action="store_true", help='Print out debugging information')
     parser.add_argument('-t', '--filetypes', nargs='*', help='A space-seperated list of filetypes to include in the data library. Defaults to fna, faa, ffn, gbk, gff', default=file_types)
     parser.add_argument('-e', '--exclude', action='store_true', help='Exclude the file types specified in -t. Defaults to excluding fna, faa, ffn, gbk, gff')
+    parser.add_argument('-a', '--allow_users', nargs='*', help='A space-seperated list of emails of users to allow access to the data library. Defaults to None- a public library.', default=[])
 
     # Parse args.
     args = parser.parse_args()
@@ -199,6 +235,7 @@ def main():
     galaxy_key = args.key
     file_types = args.filetypes
     possible_lib_name = args.name
+    allow_users = args.allow_users
 
 
     # Ensure the local directory and Galaxy URL end in a / to avoid errors later.
@@ -213,6 +250,7 @@ def main():
         print("Galaxy key: " + galaxy_key)
         print("File types: " + str(file_types))
         print("Exclude: " + str(args.exclude))
+        print("Users: " + str(allow_users))
 
     # Check the RefSeq directory exists, exit if we can't find it.
     if not os.path.isdir(local_directory):
@@ -242,6 +280,27 @@ def main():
         if args.verbose: print("Library doesn't exist - adding new library")
         lib = gi.libraries.create_library(possible_lib_name,
                                           "Data library created from directory: " + possible_lib_name)
+
+    # Set user permissions to View only.
+    if allow_users:
+        if args.verbose: print("Adding user permissions")
+        # Get the current permissions, as we want to keep all other non-view permissions the same.
+        current_permissions = getLibraryPermissions(gi, lib)
+        all_users = gi.roles.get_roles()
+        user_ids = []
+        for user in allow_users:
+            user_id = getUserIDFromEmail(user, all_users)
+            if user_id:
+                if args.verbose: print("User " + user + " given read access to library")
+                user_ids.append(user_id)
+            else:
+                print("WARNING: User " + user + " not found.")
+
+        gi.libraries.set_library_permissions(lib['id'],
+                                         access_in=user_ids,
+                                         modify_in=current_permissions["modify_library_role_list"],
+                                         add_in=current_permissions["add_library_item_role_list"],
+                                         manage_in=current_permissions["manage_library_role_list"])
 
     # Get list of files and directories to include.
     filepaths_to_include = getFilesToInclude(local_directory, file_types, args.exclude)
