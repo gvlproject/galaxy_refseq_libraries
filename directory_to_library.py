@@ -150,6 +150,13 @@ def makeFile(gi, lib, galaxy_parent_dir, local_parent_dir, filepath, galaxy_url,
     # If file doesn't exist, add it
     if filepathToString(filepath) not in getFilesInLibrary(gi.libraries.show_library(lib['id'], contents=True)):
         if verbose: print("Adding file - " + filepathToString(filepath))
+        
+        filetype = 'auto'
+
+        simon_filename, simon_file_extension = os.path.splitext(filename)
+        print ("filename " + filename + " filetype " + simon_file_extension)
+        if simon_file_extension == '.fq' or simon_file_extension == '.fastq':
+            filetype = 'fastqsanger'
 
         if "127.0.0.1" in galaxy_url or "localhost" in galaxy_url:
             # Local Galaxy server - create a symbolic link instead of a copy
@@ -157,6 +164,7 @@ def makeFile(gi, lib, galaxy_parent_dir, local_parent_dir, filepath, galaxy_url,
                 library_id=lib['id'],
                 filesystem_paths=local_parent_dir + filepathToString(filepath),
                 folder_id=galaxy_parent_dir['id'],
+                file_type=filetype,
                 link_data_only="link_to_files")
         else:
             # Remote Galaxy server - copy files from local machine
@@ -212,7 +220,7 @@ def main():
     # Default values.
     galaxy_url = 'http://127.0.0.1:8080/galaxy/'
     galaxy_key = ''
-    file_types=['fna', 'faa', 'ffn', 'gbk', 'gff']
+    file_types=['fna', 'faa', 'ffn', 'gbk', 'gff', 'fq', 'fasta', 'fa']
 
     # Get things like API Key, RefSeq directory and genus from command line.
     parser = argparse.ArgumentParser(description='Make a galaxy data library from a file/directory structure.')
